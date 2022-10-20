@@ -1,22 +1,12 @@
-//
-//  myfs.cpp
-//  myfs
-//
-//  Created by Oliver Waldhorst on 02.08.17.
-//  Copyright © 2017-2020 Oliver Waldhorst. All rights reserved.
-//
-
-// The functions fuseGettattr(), fuseRead(), and fuseReadDir() are taken from
-// an example by Mohammed Q. Hussain. Here are original copyrights & licence:
-
+// The functions fuseGettattr(), fuseRead(), and fuseReadDir() are taken from an example
 // For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
 
 #undef DEBUG
 
-// TODO: Comment lines to reduce debug messages
-#define DEBUG
-#define DEBUG_METHODS
-#define DEBUG_RETURN_VALUES
+// Comment lines to reduce debug messages
+//#define DEBUG
+//#define DEBUG_METHODS
+//#define DEBUG_RETURN_VALUES
 
 #include <unistd.h>
 #include <string.h>

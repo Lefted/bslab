@@ -1,33 +1,12 @@
-//
-// Created by Oliver Waldhorst on 20.03.20.
-//  Copyright © 2017-2020 Oliver Waldhorst. All rights reserved.
-//
-
 #include "myinmemoryfs.h"
 
-// The functions fuseGettattr(), fuseRead(), and fuseReadDir() are taken from
-// an example by Mohammed Q. Hussain. Here are original copyrights & licence:
-
-/**
- * Simple & Stupid Filesystem.
- *
- * Mohammed Q. Hussain - http://www.maastaar.net
- *
- * This is an example of using FUSE to build a simple filesystem. It is a part of a tutorial in MQH Blog with the title
- * "Writing a Simple Filesystem Using FUSE in C":
- * http://www.maastaar.net/fuse/linux/filesystem/c/2016/05/21/writing-a-simple-filesystem-using-fuse/
- *
- * License: GNU GPL
- */
-
-// For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
-
+// The functions fuseGettattr(), fuseRead(), and fuseReadDir() are taken from an example
 #undef DEBUG
 
-// TODO: Comment lines to reduce debug messages
-#define DEBUG
-#define DEBUG_METHODS
-#define DEBUG_RETURN_VALUES
+// Comment lines to reduce debug messages
+// #define DEBUG
+// #define DEBUG_METHODS
+// #define DEBUG_RETURN_VALUES
 
 #include <unistd.h>
 #include <string.h>
@@ -163,7 +142,17 @@ int MyInMemoryFS::fuseRename(const char *path, const char *newpath)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    if(files.find(newpath) != files.end()){
+        LOG("deleting file on new path.");
+        files.erase(newpath);
+        LOG("succesfully deleted file on new path.");
+    }
+    LOG("renaming file.");
+    MyFsFileInfo fileInfo = files.at(path);
+    strcpy(fileInfo.name, newpath + 1);
+    files[newpath] = fileInfo;
+    files.erase(path);
+    LOG("succesfully renamed file.");
 
     return 0;
 }
@@ -296,6 +285,12 @@ int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offse
     LOGM();
 
     // TODO: [PART 1] Implement this!
+    // Plan start
+
+    // get file through path which is key
+    // get all attributes
+
+    // Plan end
 
     LOGF("--> Trying to read %s, %lu, %lu\n", path, (unsigned long)offset, size);
 
@@ -307,8 +302,6 @@ int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offse
 
     if (strcmp(path, "/file54") == 0)
         selectedText = file54Text;
-    else if (strcmp(path, "/file349") == 0)
-        selectedText = file349Text;
     else
         return -ENOENT;
 
