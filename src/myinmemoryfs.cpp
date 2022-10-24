@@ -87,19 +87,22 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
     LOGM();
 
     // check if path + 1 is larger than NAME_LENGTH and return -ENAMETOOLONG if it is
-    if (strlen(path + 1) > NAME_LENGTH) {
+    if (strlen(path + 1) > NAME_LENGTH)
+    {
         LOGF("Path %s is too long", path);
         return -ENAMETOOLONG;
     }
 
     // check if file already exists and return -EEXIST if it does
-    if (files.find(path) != files.end()) {
+    if (files.find(path) != files.end())
+    {
         LOGF("File %s already exists", path);
         return -EEXIST;
     }
 
     // check if there is enough space for the new file and return -ENOSPC if there is not
-    if (files.size() >= NUM_DIR_ENTRIES) {
+    if (files.size() >= NUM_DIR_ENTRIES)
+    {
         LOG("Not enough space for new file");
         return -ENOSPC;
     }
@@ -210,14 +213,17 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf)
         statbuf->st_mode = S_IFDIR | 0755;
         statbuf->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
     }
-    else if (strcmp(path, "/file54") == 0 || (strcmp(path, "/test") == 0)) // this means that the file exists
+    else if (files.find(path) != files.end())
     {
         statbuf->st_mode = S_IFREG | 0644;
         statbuf->st_nlink = 1;
-        statbuf->st_size = 1024;
+        statbuf->st_size = files[path].size;
     }
     else
+    {
+        LOGF("File %s does not exist", path);
         ret = -ENOENT;
+    }
 
     RETURN(ret);
 }
@@ -415,15 +421,15 @@ int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t fille
 
     if (strcmp(path, "/") == 0) // If the user is trying to show the files/directories of the root directory show the following
     {
-        //filler(buf, "file54", NULL, 0);
-        // filler(buf, "file349",  NULL, 0);
+        // filler(buf, "file54", NULL, 0);
+        //  filler(buf, "file349",  NULL, 0);
 
-		
         // log the adress of files
         LOGF("--> File54 Address: %p", &files);
         // log size of files
         LOGF("--> File54 Size: %d", files.size());
-        for (auto it : files) {
+        for (auto it : files)
+        {
             // get the key using the iterator and use the key to retrive the stored file info
             MyFsFileInfo file = files[it.first];
             // get the file name from the file info
