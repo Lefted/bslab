@@ -107,7 +107,9 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
         return -ENOSPC;
     }
 
+	LOG("Creating new file");
     MyFsFileInfo *fileInfo = new MyFsFileInfo();
+
     strcpy(fileInfo->name, path + 1);
     fileInfo->permissions = mode;
 
@@ -116,12 +118,6 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
 
     // set the data of the file to NULL
     fileInfo->data = NULL;
-
-    // set the owner of the file to the user running the program
-    strcpy(fileInfo->owner, getlogin());
-
-    // set the group of the file to the group of the user running the program
-    strcpy(fileInfo->group, getlogin());
 
     // set the last access time of the file to the current time
     fileInfo->lastAccess = time(NULL);
@@ -134,8 +130,8 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
 
     // store the file info in the unordered_map
     files[path] = *fileInfo;
-
-    LOG("File created successfully");
+    
+    LOGF("File %s created", path);
     RETURN(0);
 }
 
@@ -411,9 +407,6 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file
 int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo)
 {
     LOGM();
-
-    // TODO: [PART 1] Implement this!
-
     LOGF("--> Getting The List of Files of %s\n", path);
 
     filler(buf, ".", NULL, 0);  // Current Directory
@@ -421,13 +414,6 @@ int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t fille
 
     if (strcmp(path, "/") == 0) // If the user is trying to show the files/directories of the root directory show the following
     {
-        // filler(buf, "file54", NULL, 0);
-        //  filler(buf, "file349",  NULL, 0);
-
-        // log the adress of files
-        LOGF("--> File54 Address: %p", &files);
-        // log size of files
-        LOGF("--> File54 Size: %d", files.size());
         for (auto it : files)
         {
             // get the key using the iterator and use the key to retrive the stored file info
