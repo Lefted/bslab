@@ -90,21 +90,21 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
     if (strlen(path + 1) > NAME_LENGTH)
     {
         LOGF("Path %s is too long", path);
-        return -ENAMETOOLONG;
+        RETURN(-ENAMETOOLONG);
     }
 
     // check if file already exists and return -EEXIST if it does
     if (files.find(path) != files.end())
     {
         LOGF("File %s already exists", path);
-        return -EEXIST;
+        RETURN(-EEXIST);
     }
 
     // check if there is enough space for the new file and return -ENOSPC if there is not
     if (files.size() >= NUM_DIR_ENTRIES)
     {
         LOG("Not enough space for new file");
-        return -ENOSPC;
+        RETURN(-ENOSPC);
     }
 
     LOG("Creating new file");
@@ -150,7 +150,7 @@ int MyInMemoryFS::fuseUnlink(const char *path)
     if (files.find(path) == files.end())
     {
         LOGF("File %s does not exist", path);
-        return -ENOENT;
+        RETURN(-ENOENT);
     }
 
     // remove allocated memory for the file data
@@ -352,7 +352,7 @@ int MyInMemoryFS::fuseWrite(const char *path, const char *buf, size_t size, off_
     // Ensure that the file exists
     if (files.find(path) == files.end())
     {
-        return -ENOENT;
+        RETURN(-ENOENT);
     }
 
     // Ensure that the file is large enough to hold the new data
