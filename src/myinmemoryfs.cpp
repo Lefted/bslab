@@ -349,9 +349,23 @@ int MyInMemoryFS::fuseWrite(const char *path, const char *buf, size_t size, off_
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    // Ensure that the file exists
+    if (files.find(path) == files.end())
+    {
+        return -ENOENT;
+    }
 
-    RETURN(0);
+    // Ensure that the file is large enough to hold the new data
+    if (files[path].size < offset + size)
+    {
+        files[path].data = (char *)realloc(files[path].data, offset + size);
+        files[path].size = offset + size;
+    }
+
+    // Copy the data using memmov
+    memmove(files[path].data + offset, buf, size);
+
+    RETURN(size);
 }
 
 /// @brief Close a file.
