@@ -107,7 +107,7 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
         return -ENOSPC;
     }
 
-	LOG("Creating new file");
+    LOG("Creating new file");
     MyFsFileInfo *fileInfo = new MyFsFileInfo();
 
     strcpy(fileInfo->name, path + 1);
@@ -130,7 +130,7 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
 
     // store the file info in the unordered_map
     files[path] = *fileInfo;
-    
+
     LOGF("File %s created", path);
     RETURN(0);
 }
@@ -144,10 +144,21 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
 int MyInMemoryFS::fuseUnlink(const char *path)
 {
     LOGM();
+    LOGF("Deleting file %s", path);
 
-    // TODO: [PART 1] Implement this!
+    // test if file exists and return -ENOENT if it does not
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        return -ENOENT;
+    }
 
-    RETURN(0);
+    // remove allocated memory for the file data
+    delete[] files[path].data;
+
+    // remove the file from the unordered_map
+    int ret = files.erase(path) == 1 ? 0 : -ENOENT;
+    RETURN(ret);
 }
 
 /// @brief Rename a file.
