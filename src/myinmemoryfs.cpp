@@ -4,9 +4,9 @@
 #undef DEBUG
 
 // Comment lines to reduce debug messages
-// #define DEBUG
-// #define DEBUG_METHODS
-// #define DEBUG_RETURN_VALUES
+#define DEBUG
+#define DEBUG_METHODS
+#define DEBUG_RETURN_VALUES
 
 #include <unistd.h>
 #include <string.h>
@@ -533,7 +533,7 @@ int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t fille
             // get the key using the iterator and use the key to retrive the stored file info
             MyFsFileInfo file = files[it.first];
             // get the file name from the file info
-            std::string fileName = file.name;
+            std::string fileName = file.name
             LOGF("--> File Name: %s", fileName.c_str());
             // call the fillter function to add the file name to the buffer
             filler(buf, fileName.c_str(), NULL, 0);
@@ -578,7 +578,10 @@ void MyInMemoryFS::fuseDestroy()
     LOGM();
     // remove entire directory
      for (auto it : files){
-        fuseUnlink(it.first);
+        MyFsFileInfo file = files.at(it.first);
+        LOGF("iterator.next returns: %s", it.first);
+        //std::string fileName = "/" + file.name.c_str();
+        //fuseUnlink(fileName);
     }
 }
 
