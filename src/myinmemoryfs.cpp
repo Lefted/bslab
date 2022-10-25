@@ -565,7 +565,6 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
 
         LOG("Using in-memory mode");
 
-        // TODO: [PART 1] Implement your initialization methods here
     }
 
     RETURN(0);
@@ -577,8 +576,10 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
 void MyInMemoryFS::fuseDestroy()
 {
     LOGM();
-
-    // TODO: [PART 1] Implement this!
+    // remove entire directory
+     for (auto it : files){
+        fuseUnlink(it.first);
+    }
 }
 
 // TODO: [PART 1] You may add your own additional methods here!
