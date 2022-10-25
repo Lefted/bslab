@@ -44,8 +44,8 @@ struct MyFsFileInfo
     char name[NAME_LENGTH];
     size_t size;
     char *data;
-    char owner[NAME_LENGTH];
-    char group[NAME_LENGTH];
+    uid_t owner;
+    gid_t group;
     mode_t permissions;
     time_t lastAccess;
     time_t lastModification;
@@ -249,13 +249,13 @@ int MyInMemoryFS::fuseChmod(const char *path, mode_t mode)
     int ret = 0;
     if (files.find(path) != files.end())
     {
-        files.find(path)->st_mode = mode;
+        files[path].permissions = mode;
         LOGF("File %s: permissions changed to %d", path, mode);
     }
     else
     {
         LOGF("File %s does not exist", path);
-        ret = -ERRNO;
+        ret = -ENOENT;
     }
 
     RETURN(ret);
@@ -278,21 +278,23 @@ int MyInMemoryFS::fuseChown(const char *path, uid_t uid, gid_t gid)
     if (files.find(path) == files.end())
     {
         LOGF("File %s does not exist", path);
-        ret = -ERRNO;
-    }
-    else if ((strlen(uid) > NAME_LENGTH) || (strlen(gid) > NAME_LENGTH))
-    {
-        LOGF("uid or gid is larger than NAME_LENGTH");
-        ret = -ERRNO;
+        ret = -ENOENT;
     }
     else
     {
-        files.find(path)->owner = uid;
-        files.find(path)->group = gid;
-        LOGF("File %s: owner and group changed to %d and %d", path, uid, gid);
+        if (uid >= 0)
+        {
+            files[path].owner = uid;
+            LOGF("File %s: owner changed to %d", path, uid);
+        }
+        if (gid >= 0)
+        {
+            files[path].group = gid;
+            LOGF("File %s: group changed to %d", path, gid);
+        }
     }
     
-    RETURN(0);
+    RETURN(ret);
 }
 
 /// @brief Open a file.
