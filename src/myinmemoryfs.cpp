@@ -54,6 +54,7 @@ struct MyFsFileInfo
 
 // unordered_map  for storing file info by path name
 std::unordered_map<std::string, MyFsFileInfo> files;
+unsigned int openFilesCount = 0;
 
 /// @brief Constructor of the in-memory file system class.
 ///
@@ -309,9 +310,28 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    LOGF("Try to open file %s", path);
+    int ret = 0;
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else
+    {
+        if (openFilesCount >= NUM_OPEN_FILES)
+        {
+            LOGF("Too many open files");
+            ret = -EMFILE;
+        }
+        else
+        {
+            openFilesCount++;
+            LOGF("File %s opened", path);
+        }
+    }
 
-    RETURN(0);
+    RETURN(ret);
 }
 
 /// @brief Read from a file.
@@ -413,8 +433,25 @@ int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo)
     LOGM();
 
     // TODO: [PART 1] Implement this!
-
-    RETURN(0);
+    int ret = 0;
+    LOGF("Try to close file %s", path);
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else if (openFilesCount == 0)
+    {
+        LOGF("No open files");
+        ret = -ENOENT;
+    }
+    else
+    {
+        openFilesCount--;
+        LOGF("File %s closed", path);
+    }
+    
+    RETURN(ret);
 }
 
 /// @brief Truncate a file.
@@ -430,8 +467,21 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize)
     LOGM();
 
     // TODO: [PART 1] Implement this!
+    int ret = 0;
+    LOGF("Try to truncate file %s to %lu", path, newSize);
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else
+    {
+        files[path].data = (char *)realloc(files[path].data, newSize);
+        files[path].size = newSize;
+        LOGF("File %s truncated to %lu", path, newSize);
+    }
 
-    return 0;
+    RETURN(ret);
 }
 
 /// @brief Truncate a file.
@@ -449,8 +499,21 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file
     LOGM();
 
     // TODO: [PART 1] Implement this!
+    int ret = 0;
+    LOGF("Try to truncate open file %s to %lu", path, newSize);
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else
+    {
+        files[path].data = (char *)realloc(files[path].data, newSize);
+        files[path].size = newSize;
+        LOGF("File %s truncated to %lu", path, newSize);
+    }
 
-    RETURN(0);
+    RETURN(ret);
 }
 
 /// @brief Read a directory.
