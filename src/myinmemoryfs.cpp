@@ -23,8 +23,8 @@ struct MyFsFileInfo
     char name[NAME_LENGTH];
     size_t size;
     char *data;
-    char owner[NAME_LENGTH];
-    char group[NAME_LENGTH];
+    uid_t owner;
+    gid_t group;
     mode_t permissions;
     time_t lastAccess;
     time_t lastModification;
@@ -33,6 +33,7 @@ struct MyFsFileInfo
 
 // unordered_map  for storing file info by path name
 std::unordered_map<std::string, MyFsFileInfo> files;
+unsigned int openFilesCount = 0;
 
 /// @brief Constructor of the in-memory file system class.
 ///
@@ -69,24 +70,24 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
     if (strlen(path + 1) > NAME_LENGTH)
     {
         LOGF("Path %s is too long", path);
-        return -ENAMETOOLONG;
+        RETURN(-ENAMETOOLONG);
     }
 
     // check if file already exists and return -EEXIST if it does
     if (files.find(path) != files.end())
     {
         LOGF("File %s already exists", path);
-        return -EEXIST;
+        RETURN(-EEXIST);
     }
 
     // check if there is enough space for the new file and return -ENOSPC if there is not
     if (files.size() >= NUM_DIR_ENTRIES)
     {
         LOG("Not enough space for new file");
-        return -ENOSPC;
+        RETURN(-ENOSPC);
     }
 
-	LOG("Creating new file");
+    LOG("Creating new file");
     MyFsFileInfo *fileInfo = new MyFsFileInfo();
 
     strcpy(fileInfo->name, path + 1);
@@ -109,7 +110,7 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
 
     // store the file info in the unordered_map
     files[path] = *fileInfo;
-    
+
     LOGF("File %s created", path);
     RETURN(0);
 }
@@ -123,10 +124,21 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev)
 int MyInMemoryFS::fuseUnlink(const char *path)
 {
     LOGM();
+    LOGF("Deleting file %s", path);
 
-    // TODO: [PART 1] Implement this!
+    // test if file exists and return -ENOENT if it does not
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        RETURN(-ENOENT);
+    }
 
-    RETURN(0);
+    // remove allocated memory for the file data
+    delete[] files[path].data;
+
+    // remove the file from the unordered_map
+    int ret = files.erase(path) == 1 ? 0 : -ENOENT;
+    RETURN(ret);
 }
 
 /// @brief Rename a file.
@@ -224,9 +236,19 @@ int MyInMemoryFS::fuseChmod(const char *path, mode_t mode)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    int ret = 0;
+    if (files.find(path) != files.end())
+    {
+        files[path].permissions = mode;
+        LOGF("File %s: permissions changed to %d", path, mode);
+    }
+    else
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
 
-    RETURN(0);
+    RETURN(ret);
 }
 
 /// @brief Change the owner of a file.
@@ -241,9 +263,28 @@ int MyInMemoryFS::fuseChown(const char *path, uid_t uid, gid_t gid)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
-
-    RETURN(0);
+    int ret = 0;
+    // check if uid or gid is larger than NAME_LENGTH
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else
+    {
+        if (uid >= 0)
+        {
+            files[path].owner = uid;
+            LOGF("File %s: owner changed to %d", path, uid);
+        }
+        if (gid >= 0)
+        {
+            files[path].group = gid;
+            LOGF("File %s: group changed to %d", path, gid);
+        }
+    }
+    
+    RETURN(ret);
 }
 
 /// @brief Open a file.
@@ -258,9 +299,28 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    LOGF("Try to open file %s", path);
+    int ret = 0;
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else
+    {
+        if (openFilesCount >= NUM_OPEN_FILES)
+        {
+            LOG("Too many open files");
+            ret = -EMFILE;
+        }
+        else
+        {
+            openFilesCount++;
+            LOGF("File %s opened", path);
+        }
+    }
 
-    RETURN(0);
+    RETURN(ret);
 }
 
 /// @brief Read from a file.
@@ -283,33 +343,40 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo)
 int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo)
 {
     LOGM();
-
-    // TODO: [PART 1] Implement this!
     // Plan start
 
     // get file through path which is key
     // get all attributes
 
     // Plan end
-
     LOGF("--> Trying to read %s, %lu, %lu\n", path, (unsigned long)offset, size);
 
-    char file54Text[] = "Hello World From File54!\n";
-    char file349Text[] = "Hello World From File349!\n";
-    char *selectedText = NULL;
+    // Ensure that the file exists
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        RETURN(-ENOENT);
+    }
 
-    // ... //
+    // Ensure that the file is not empty
+    if (files[path].size == 0)
+    {
+        LOGF("File %s is empty", path);
+        RETURN(0);
+    }
 
-    if (strcmp(path, "/file54") == 0)
-        selectedText = file54Text;
-    else
-        return -ENOENT;
+    // Warn if the file is smaller than the requested offset
+    // by comparing the size of the file with the offset but casting the offset to unsigned long
+    if (files[path].size < (unsigned long)offset)
+    {
+        LOGF("File %s is smaller than the requested offset", path);
+    }
 
-    // ... //
+    // Copy the requested bytes into the buffer
+    size_t bytesToCopy = std::min(size, files[path].size - offset);
+    memcpy(buf, files[path].data + offset, bytesToCopy);
 
-    memcpy(buf, selectedText + offset, size);
-
-    RETURN((int)(strlen(selectedText) - offset));
+    RETURN(bytesToCopy);
 }
 
 /// @brief Write to a file.
@@ -331,9 +398,23 @@ int MyInMemoryFS::fuseWrite(const char *path, const char *buf, size_t size, off_
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    // Ensure that the file exists
+    if (files.find(path) == files.end())
+    {
+        RETURN(-ENOENT);
+    }
 
-    RETURN(0);
+    // Ensure that the file is large enough to hold the new data
+    if (files[path].size < offset + size)
+    {
+        files[path].data = (char *)realloc(files[path].data, offset + size);
+        files[path].size = offset + size;
+    }
+
+    // Copy the data using memmov
+    memmove(files[path].data + offset, buf, size);
+
+    RETURN(size);
 }
 
 /// @brief Close a file.
@@ -346,9 +427,25 @@ int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
-
-    RETURN(0);
+    int ret = 0;
+    LOGF("Try to close file %s", path);
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else if (openFilesCount == 0)
+    {
+        LOG("No open files");
+        ret = -ENOENT;
+    }
+    else
+    {
+        openFilesCount--;
+        LOGF("File %s closed", path);
+    }
+    
+    RETURN(ret);
 }
 
 /// @brief Truncate a file.
@@ -363,9 +460,21 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    int ret = 0;
+    LOGF("Try to truncate file %s to %lu", path, newSize);
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else
+    {
+        files[path].data = (char *)realloc(files[path].data, newSize);
+        files[path].size = newSize;
+        LOGF("File %s truncated to %lu", path, newSize);
+    }
 
-    return 0;
+    RETURN(ret);
 }
 
 /// @brief Truncate a file.
@@ -382,9 +491,21 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    int ret = 0;
+    LOGF("Try to truncate open file %s to %lu", path, newSize);
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ENOENT;
+    }
+    else
+    {
+        files[path].data = (char *)realloc(files[path].data, newSize);
+        files[path].size = newSize;
+        LOGF("File %s truncated to %lu", path, newSize);
+    }
 
-    RETURN(0);
+    RETURN(ret);
 }
 
 /// @brief Read a directory.
