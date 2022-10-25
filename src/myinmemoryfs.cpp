@@ -235,9 +235,19 @@ int MyInMemoryFS::fuseChmod(const char *path, mode_t mode)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    int ret = 0;
+    if (files.find(path) != files.end())
+    {
+        files.find(path)->st_mode = mode;
+        LOGF("File %s: permissions changed to %d", path, mode);
+    }
+    else
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ERRNO;
+    }
 
-    RETURN(0);
+    RETURN(ret);
 }
 
 /// @brief Change the owner of a file.
@@ -252,8 +262,25 @@ int MyInMemoryFS::fuseChown(const char *path, uid_t uid, gid_t gid)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
-
+    int ret = 0;
+    // check if uid or gid is larger than NAME_LENGTH
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        ret = -ERRNO;
+    }
+    else if ((strlen(uid) > NAME_LENGTH) || (strlen(gid) > NAME_LENGTH))
+    {
+        LOGF("uid or gid is larger than NAME_LENGTH");
+        ret = -ERRNO;
+    }
+    else
+    {
+        files.find(path)->owner = uid;
+        files.find(path)->group = gid;
+        LOGF("File %s: owner and group changed to %d and %d", path, uid, gid);
+    }
+    
     RETURN(0);
 }
 
