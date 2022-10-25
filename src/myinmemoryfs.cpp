@@ -305,29 +305,34 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo)
 int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo)
 {
     LOGM();
-
-    // TODO: [PART 1] Implement this!
-
     LOGF("--> Trying to read %s, %lu, %lu\n", path, (unsigned long)offset, size);
 
-    char file54Text[] = "Hello World From File54!\n";
-    char file349Text[] = "Hello World From File349!\n";
-    char *selectedText = NULL;
+    // Ensure that the file exists
+    if (files.find(path) == files.end())
+    {
+        LOGF("File %s does not exist", path);
+        RETURN(-ENOENT);
+    }
 
-    // ... //
+    // Ensure that the file is not empty
+    if (files[path].size == 0)
+    {
+        LOGF("File %s is empty", path);
+        RETURN(0);
+    }
 
-    if (strcmp(path, "/file54") == 0)
-        selectedText = file54Text;
-    else if (strcmp(path, "/file349") == 0)
-        selectedText = file349Text;
-    else
-        return -ENOENT;
+    // Warn if the file is smaller than the requested offset
+    // by comparing the size of the file with the offset but casting the offset to unsigned long
+    if (files[path].size < (unsigned long)offset)
+    {
+        LOGF("File %s is smaller than the requested offset", path);
+    }
 
-    // ... //
+    // Copy the requested bytes into the buffer
+    size_t bytesToCopy = std::min(size, files[path].size - offset);
+    memcpy(buf, files[path].data + offset, bytesToCopy);
 
-    memcpy(buf, selectedText + offset, size);
-
-    RETURN((int)(strlen(selectedText) - offset));
+    RETURN(bytesToCopy);
 }
 
 /// @brief Write to a file.
