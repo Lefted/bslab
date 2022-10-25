@@ -1,8 +1,30 @@
+//
+// Created by Oliver Waldhorst on 20.03.20.
+//  Copyright © 2017-2020 Oliver Waldhorst. All rights reserved.
+//
+
 #include "myinmemoryfs.h"
 
-// The functions fuseGettattr(), fuseRead(), and fuseReadDir() are taken from an example
+// The functions fuseGettattr(), fuseRead(), and fuseReadDir() are taken from
+// an example by Mohammed Q. Hussain. Here are original copyrights & licence:
+
+/**
+ * Simple & Stupid Filesystem.
+ *
+ * Mohammed Q. Hussain - http://www.maastaar.net
+ *
+ * This is an example of using FUSE to build a simple filesystem. It is a part of a tutorial in MQH Blog with the title
+ * "Writing a Simple Filesystem Using FUSE in C":
+ * http://www.maastaar.net/fuse/linux/filesystem/c/2016/05/21/writing-a-simple-filesystem-using-fuse/
+ *
+ * License: GNU GPL
+ */
+
+// For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
+
 #undef DEBUG
 
+// TODO: Comment lines to reduce debug messages
 // Comment lines to reduce debug messages
 #define DEBUG
 #define DEBUG_METHODS
