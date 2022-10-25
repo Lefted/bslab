@@ -321,7 +321,7 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo)
     {
         if (openFilesCount >= NUM_OPEN_FILES)
         {
-            LOGF("Too many open files");
+            LOG("Too many open files");
             ret = -EMFILE;
         }
         else
@@ -432,7 +432,6 @@ int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
     int ret = 0;
     LOGF("Try to close file %s", path);
     if (files.find(path) == files.end())
@@ -442,7 +441,7 @@ int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo)
     }
     else if (openFilesCount == 0)
     {
-        LOGF("No open files");
+        LOG("No open files");
         ret = -ENOENT;
     }
     else
@@ -466,7 +465,6 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
     int ret = 0;
     LOGF("Try to truncate file %s to %lu", path, newSize);
     if (files.find(path) == files.end())
@@ -498,7 +496,6 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
     int ret = 0;
     LOGF("Try to truncate open file %s to %lu", path, newSize);
     if (files.find(path) == files.end())
