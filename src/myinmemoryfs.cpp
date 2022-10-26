@@ -591,12 +591,16 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
 void MyInMemoryFS::fuseDestroy()
 {
     LOGM();
+    LOG("Deleting all files in directory now.");
     // remove entire directory
      for (auto it : files){
-        MyFsFileInfo file = files.at(it.first);
-        LOGF("iterator.next returns: %s", it.first);
-        //std::string fileName = "/" + file.name.c_str();
-        //fuseUnlink(fileName);
+        MyFsFileInfo file = files[it.first];
+        std::string pathPrefix = "/";
+        std::string fileName = file.name;
+        std::string filePath = pathPrefix + fileName;
+        LOGF("File %s being deleted", filePath.c_str());
+        _instance->fuseUnlink(filePath.c_str());
+        LOGF("File %s succesfully deleted", filePath.c_str());
     }
 }
 
