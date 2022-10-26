@@ -593,8 +593,12 @@ void MyInMemoryFS::fuseDestroy()
     LOGM();
     // remove entire directory
      for (auto it : files){
-        MyFsFileInfo file = files.at(it.first);
-        LOGF("iterator.next returns: %s", it.first);
+        MyFsFileInfo file = files[it.first];
+        //LOGF("iterator.next returns: %s", it.first);
+        std::string pathPrefix = "/";
+        std::string fileName = file.name;
+        std::string filePath = pathPrefix + fileName;
+        LOGF("path for file: %s", filePath.c_str());
         //std::string fileName = "/" + file.name.c_str();
         //fuseUnlink(fileName);
     }
