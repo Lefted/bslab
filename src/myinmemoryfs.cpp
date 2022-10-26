@@ -71,8 +71,17 @@ MyInMemoryFS::MyInMemoryFS() : MyFS()
 /// You may add your own destructor code here.
 MyInMemoryFS::~MyInMemoryFS()
 {
-
-    // TODO: [PART 1] Add your cleanup code here
+     LOG("Deleting all files in directory now.");
+    // remove entire directory
+     for (auto it : files){
+        MyFsFileInfo file = files[it.first];
+        std::string pathPrefix = "/";
+        std::string fileName = file.name;
+        std::string filePath = pathPrefix + fileName;
+        LOGF("File %s being deleted", filePath.c_str());
+        this->fuseUnlink(filePath.c_str());
+        LOGF("File %s succesfully deleted", filePath.c_str());
+    }
 }
 
 /// @brief Create a new file.
@@ -591,17 +600,6 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
 void MyInMemoryFS::fuseDestroy()
 {
     LOGM();
-    LOG("Deleting all files in directory now.");
-    // remove entire directory
-     for (auto it : files){
-        MyFsFileInfo file = files[it.first];
-        std::string pathPrefix = "/";
-        std::string fileName = file.name;
-        std::string filePath = pathPrefix + fileName;
-        LOGF("File %s being deleted", filePath.c_str());
-        _instance->fuseUnlink(filePath.c_str());
-        LOGF("File %s succesfully deleted", filePath.c_str());
-    }
 }
 
 // TODO: [PART 1] You may add your own additional methods here!
