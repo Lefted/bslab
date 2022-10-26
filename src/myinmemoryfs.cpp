@@ -25,6 +25,7 @@
 #undef DEBUG
 
 // TODO: Comment lines to reduce debug messages
+// Comment lines to reduce debug messages
 #define DEBUG
 #define DEBUG_METHODS
 #define DEBUG_RETURN_VALUES
@@ -175,7 +176,17 @@ int MyInMemoryFS::fuseRename(const char *path, const char *newpath)
 {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    if(files.find(newpath) != files.end()){
+        LOG("deleting file on new path.");
+        files.erase(newpath);
+        LOG("succesfully deleted file on new path.");
+    }
+    LOG("renaming file.");
+    MyFsFileInfo fileInfo = files.at(path);
+    strcpy(fileInfo.name, newpath + 1);
+    files[newpath] = fileInfo;
+    files.erase(path);
+    LOG("succesfully renamed file.");
 
     return 0;
 }
@@ -354,6 +365,12 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo)
 int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo)
 {
     LOGM();
+    // Plan start
+
+    // get file through path which is key
+    // get all attributes
+
+    // Plan end
     LOGF("--> Trying to read %s, %lu, %lu\n", path, (unsigned long)offset, size);
 
     // Ensure that the file exists
@@ -538,7 +555,7 @@ int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t fille
             // get the key using the iterator and use the key to retrive the stored file info
             MyFsFileInfo file = files[it.first];
             // get the file name from the file info
-            std::string fileName = file.name;
+            std::string fileName = file.name
             LOGF("--> File Name: %s", fileName.c_str());
             // call the fillter function to add the file name to the buffer
             filler(buf, fileName.c_str(), NULL, 0);
@@ -570,7 +587,6 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
 
         LOG("Using in-memory mode");
 
-        // TODO: [PART 1] Implement your initialization methods here
     }
 
     RETURN(0);
@@ -582,8 +598,13 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
 void MyInMemoryFS::fuseDestroy()
 {
     LOGM();
-
-    // TODO: [PART 1] Implement this!
+    // remove entire directory
+     for (auto it : files){
+        MyFsFileInfo file = files.at(it.first);
+        LOGF("iterator.next returns: %s", it.first);
+        //std::string fileName = "/" + file.name.c_str();
+        //fuseUnlink(fileName);
+    }
 }
 
 // TODO: [PART 1] You may add your own additional methods here!
