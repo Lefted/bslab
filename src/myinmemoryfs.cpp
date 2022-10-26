@@ -24,7 +24,6 @@
 
 #undef DEBUG
 
-// TODO: Comment lines to reduce debug messages
 #define DEBUG
 #define DEBUG_METHODS
 #define DEBUG_RETURN_VALUES
@@ -63,7 +62,6 @@ MyInMemoryFS::MyInMemoryFS() : MyFS()
 
 {
 
-    // TODO: [PART 1] Add your constructor code here
 }
 
 /// @brief Destructor of the in-memory file system class.
@@ -208,8 +206,6 @@ int MyInMemoryFS::fuseRename(const char *path, const char *newpath)
 int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf)
 {
     LOGM();
-
-    // TODO: [PART 1] Implement this!
 
     LOGF("\tAttributes of %s requested\n", path);
 
@@ -602,7 +598,7 @@ void MyInMemoryFS::fuseDestroy()
     LOGM();
 }
 
-// TODO: [PART 1] You may add your own additional methods here!
+// [PART 1] You may add your own additional methods here!
 
 // DO NOT EDIT ANYTHING BELOW THIS LINE!!!
 
