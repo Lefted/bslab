@@ -25,7 +25,6 @@
 #undef DEBUG
 
 // TODO: Comment lines to reduce debug messages
-// Comment lines to reduce debug messages
 #define DEBUG
 #define DEBUG_METHODS
 #define DEBUG_RETURN_VALUES
@@ -365,12 +364,6 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo)
 int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo)
 {
     LOGM();
-    // Plan start
-
-    // get file through path which is key
-    // get all attributes
-
-    // Plan end
     LOGF("--> Trying to read %s, %lu, %lu\n", path, (unsigned long)offset, size);
 
     // Ensure that the file exists
@@ -555,7 +548,7 @@ int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t fille
             // get the key using the iterator and use the key to retrive the stored file info
             MyFsFileInfo file = files[it.first];
             // get the file name from the file info
-            std::string fileName = file.name
+            std::string fileName = file.name;
             LOGF("--> File Name: %s", fileName.c_str());
             // call the fillter function to add the file name to the buffer
             filler(buf, fileName.c_str(), NULL, 0);
