@@ -38,6 +38,14 @@
 #include "myfs-info.h"
 #include "blockdevice.h"
 
+// TODO complete TODO marks
+// TODO attach to instance?
+// usememmove instead of memcpy when reading
+// move deleting of all files into own function, call it in the destructor
+// extract file exists assertion into seperate method
+// use RETURN macros in all functions
+// use it.first instead of building path via file.name
+
 struct MyFsFileInfo
 {
     char name[NAME_LENGTH];
