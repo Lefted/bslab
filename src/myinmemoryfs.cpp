@@ -80,10 +80,7 @@ MyInMemoryFS::~MyInMemoryFS()
      LOG("Deleting all files in directory now.");
     // remove entire directory
      for (auto it : files){
-        MyFsFileInfo file = files[it.first];
-        std::string pathPrefix = "/";
-        std::string fileName = file.name;
-        std::string filePath = pathPrefix + fileName;
+        std::string filePath = it.first;
         LOGF("File %s being deleted", filePath.c_str());
         this->fuseUnlink(filePath.c_str());
         LOGF("File %s succesfully deleted", filePath.c_str());
