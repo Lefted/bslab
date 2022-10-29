@@ -14,6 +14,18 @@
 #define NUM_DIR_ENTRIES 64
 #define NUM_OPEN_FILES 64
 
-// TODO: Add structures of your file system here
+// Add structures of your file system here
+struct MyFsFileInfo
+{
+	char name[NAME_LENGTH];
+	size_t size;
+	char *data;
+	uid_t owner;
+	gid_t group;
+	mode_t permissions;
+	time_t lastAccess;
+	time_t lastModification;
+	time_t lastStatusChange;
+};
 
 #endif /* myfs_structs_h */

@@ -41,6 +41,6 @@ fprintf(this->logFile, "%s() returned %d\n", __func__, ret); return ret;
 #define RETURN(ret) return ret;
 #endif
 
-// TODO: Implement your own macros here!
+// Implement your own macros here!
 
 #endif /* macros_h */

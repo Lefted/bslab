@@ -12,16 +12,20 @@
 #include "myfs.h"
 #include "blockdevice.h"
 #include "myfs-structs.h"
+#include <unordered_map>
 
 /// @brief In-memory implementation of a simple file system.
-class MyInMemoryFS : public MyFS {
+class MyInMemoryFS : public MyFS
+{
 protected:
     // BlockDevice blockDevice;
 
 public:
     static MyInMemoryFS *Instance();
 
-    // TODO: [PART 1] Add attributes of your file system here
+    // [PART 1] Add attributes of your file system here
+    std::unordered_map<std::string, MyFsFileInfo> files;
+    static unsigned int openFilesCount;
 
     MyInMemoryFS();
     ~MyInMemoryFS();
@@ -41,13 +45,12 @@ public:
     virtual int fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo);
     virtual int fuseWrite(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo);
     virtual int fuseRelease(const char *path, struct fuse_file_info *fileInfo);
-    virtual void* fuseInit(struct fuse_conn_info *conn);
+    virtual void *fuseInit(struct fuse_conn_info *conn);
     virtual int fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo);
     virtual int fuseTruncate(const char *path, off_t offset, struct fuse_file_info *fileInfo);
     virtual void fuseDestroy();
 
-    // TODO: Add methods of your file system here
-
+    virtual void deleteAllFiles();
 };
 
-#endif //MYFS_MYINMEMORYFS_H
+#endif // MYFS_MYINMEMORYFS_H

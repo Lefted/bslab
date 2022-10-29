@@ -31,45 +31,20 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <unordered_map>
 
 #include "macros.h"
 #include "myfs.h"
 #include "myfs-info.h"
 #include "blockdevice.h"
 
-// TODO complete TODO marks
-// TODO attach to instance?
-// usememmove instead of memcpy when reading
-// move deleting of all files into own function, call it in the destructor
-// extract file exists assertion into seperate method
-// use RETURN macros in all functions
-// use it.first instead of building path via file.name
-
-struct MyFsFileInfo
-{
-    char name[NAME_LENGTH];
-    size_t size;
-    char *data;
-    uid_t owner;
-    gid_t group;
-    mode_t permissions;
-    time_t lastAccess;
-    time_t lastModification;
-    time_t lastStatusChange;
-};
-
-// unordered_map  for storing file info by path name
-std::unordered_map<std::string, MyFsFileInfo> files;
-unsigned int openFilesCount = 0;
+unsigned int MyInMemoryFS::openFilesCount = 0;
 
 /// @brief Constructor of the in-memory file system class.
 ///
 /// You may add your own constructor code here.
 MyInMemoryFS::MyInMemoryFS() : MyFS()
-
 {
-
+    files = std::unordered_map<std::string, MyFsFileInfo>();
 }
 
 /// @brief Destructor of the in-memory file system class.
@@ -77,14 +52,7 @@ MyInMemoryFS::MyInMemoryFS() : MyFS()
 /// You may add your own destructor code here.
 MyInMemoryFS::~MyInMemoryFS()
 {
-     LOG("Deleting all files in directory now.");
-    // remove entire directory
-     for (auto it : files){
-        std::string filePath = it.first;
-        LOGF("File %s being deleted", filePath.c_str());
-        this->fuseUnlink(filePath.c_str());
-        LOGF("File %s succesfully deleted", filePath.c_str());
-    }
+    deleteAllFiles();
 }
 
 /// @brief Create a new file.
@@ -187,7 +155,8 @@ int MyInMemoryFS::fuseRename(const char *path, const char *newpath)
 {
     LOGM();
 
-    if(files.find(newpath) != files.end()){
+    if (files.find(newpath) != files.end())
+    {
         LOG("deleting file on new path.");
         files.erase(newpath);
         LOG("succesfully deleted file on new path.");
@@ -199,7 +168,7 @@ int MyInMemoryFS::fuseRename(const char *path, const char *newpath)
     files.erase(path);
     LOG("succesfully renamed file.");
 
-    return 0;
+    RETURN(0);
 }
 
 /// @brief Get file meta data.
@@ -314,7 +283,7 @@ int MyInMemoryFS::fuseChown(const char *path, uid_t uid, gid_t gid)
             LOGF("File %s: group changed to %d", path, gid);
         }
     }
-    
+
     RETURN(ret);
 }
 
@@ -399,7 +368,7 @@ int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offse
 
     // Copy the requested bytes into the buffer
     size_t bytesToCopy = std::min(size, files[path].size - offset);
-    memcpy(buf, files[path].data + offset, bytesToCopy);
+    memmove(buf, files[path].data + offset, bytesToCopy);
 
     RETURN(bytesToCopy);
 }
@@ -469,7 +438,7 @@ int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo)
         openFilesCount--;
         LOGF("File %s closed", path);
     }
-    
+
     RETURN(ret);
 }
 
@@ -589,9 +558,9 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
         LOG("Starting logging...\n");
 
         LOG("Using in-memory mode");
-
     }
 
+    openFilesCount = 0;
     RETURN(0);
 }
 
@@ -601,6 +570,19 @@ void *MyInMemoryFS::fuseInit(struct fuse_conn_info *conn)
 void MyInMemoryFS::fuseDestroy()
 {
     LOGM();
+}
+
+void MyInMemoryFS::deleteAllFiles()
+{
+    LOG("Deleting all files in directory now.");
+    // remove entire directory
+    for (auto it : files)
+    {
+        std::string filePath = it.first;
+        LOGF("File %s being deleted", filePath.c_str());
+        fuseUnlink(filePath.c_str());
+        LOGF("File %s succesfully deleted", filePath.c_str());
+    }
 }
 
 // [PART 1] You may add your own additional methods here!
