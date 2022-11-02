@@ -29,7 +29,8 @@
 #define DEBUG_RETURN_VALUES
 
 #include <unistd.h>
-#include <string.h>
+#include <string>
+#include <cstring>
 #include <errno.h>
 
 #include "macros.h"
